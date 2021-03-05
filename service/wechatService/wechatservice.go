@@ -101,15 +101,15 @@ func SendVoiceMessage(openid string, mediaid string) {
 }
 
 // SendVideoMessage 发送视频消息
-func SendVideoMessage(openid string, media_id string, thumb_media_id string, title string, desc string) {
+func SendVideoMessage(openid string, mediaid string, thumbmediaid string, title string, desc string) {
 	url := conf.SENDMESSAGE
 	url = url + "?access_token=" + GetAccessToken()
 	param := make(map[string]interface{})
 	param["touser"] = openid
 	param["msgtype"] = "video"
 	video := make(map[string]string)
-	video["media_id"] = media_id
-	video["thumb_media_id"] = thumb_media_id
+	video["media_id"] = mediaid
+	video["thumb_media_id"] = thumbmediaid
 	video["title"] = title
 	video["description"] = desc
 	res, err := httputil.SendPostJson(url, param, nil)
@@ -119,7 +119,7 @@ func SendVideoMessage(openid string, media_id string, thumb_media_id string, tit
 }
 
 // SendMusicMessage 发送音乐消息
-func SendMusicMessage(openid string, title string, musicurl string, hqurl string, media_id string, desc string) {
+func SendMusicMessage(openid string, title string, musicurl string, hqurl string, mediaid string, desc string) {
 	url := conf.SENDMESSAGE
 	url = url + "?access_token=" + GetAccessToken()
 	param := make(map[string]interface{})
@@ -130,7 +130,7 @@ func SendMusicMessage(openid string, title string, musicurl string, hqurl string
 	music["description"] = desc
 	music["musicurl"] = musicurl
 	music["hqmusicurl"] = hqurl
-	music["thumb_media_id"] = media_id
+	music["thumb_media_id"] = mediaid
 	res, err := httputil.SendPostJson(url, param, nil)
 	if err == nil {
 		fmt.Println(res)
@@ -170,4 +170,86 @@ func SendMpnewsMessage(openid string, mediaid string) {
 	if err == nil {
 		fmt.Println(res)
 	}
+}
+
+// Sendtemplate 发送模板消息
+func Sendtemplate(openid string, data map[string]interface{}, templateid string, url string, appid string, pagepath string) {
+	json := make(map[string]interface{})
+	json["touser"] = openid
+	json["template_id"] = templateid
+	if url != "" {
+		json["url"] = url
+	}
+	json["data"] = data
+	if appid != "" {
+		miniprogram := make(map[string]string)
+		miniprogram["appid"] = appid
+		miniprogram["pagepath"] = pagepath
+		json["miniprogram"] = miniprogram
+	}
+	sendurl := conf.SENDTEMPLATE
+	sendurl = sendurl + "?access_token=" + GetAccessToken()
+	res, err := httputil.SendPostJson(sendurl, json, nil)
+	if err == nil {
+		logs.Info(res)
+	}
+}
+
+// GetTemporaryQr 生成临时二维码
+func GetTemporaryQr(long int64, data interface{}) string {
+	sendurl := conf.GETQRCODE
+	sendurl = sendurl + "?access_token=" + GetAccessToken()
+	param := make(map[string]interface{})
+	param["expire_seconds"] = long
+	actioninfo := make(map[string]interface{})
+	scene := make(map[string]interface{})
+	switch data.(type) {
+	case string:
+		scene["scene_str"] = data
+		param["action_name"] = "QR_STR_SCENE"
+	case int:
+		scene["scene_id"] = data
+		param["action_name"] = "QR_SCENE"
+	}
+	actioninfo["scene"] = scene
+	param["action_info"] = actioninfo
+	logs.Info(sendurl)
+	logs.Info(param)
+	res, err := httputil.SendPostJson(sendurl, param, nil)
+	if err != nil {
+		logs.Error(err)
+	}
+	resMap := make(map[string]interface{})
+	json.Unmarshal([]byte(res), &resMap)
+	fmt.Sprintln(resMap)
+	return res
+}
+
+// GetQrcode 生成永久二维码
+func GetQrcode(data interface{}) string {
+	sendurl := conf.GETQRCODE
+	sendurl = sendurl + "?access_token=" + GetAccessToken()
+	param := make(map[string]interface{})
+	actioninfo := make(map[string]interface{})
+	scene := make(map[string]interface{})
+	switch data.(type) {
+	case string:
+		scene["scene_str"] = data
+		param["action_name"] = "QR_LIMIT_STR_SCENE"
+	case int:
+		scene["scene_id"] = data
+		param["action_name"] = "QR_LIMIT_SCENE"
+	}
+	actioninfo["scene"] = scene
+	param["action_info"] = actioninfo
+	logs.Info(sendurl)
+	logs.Info(param)
+	res, err := httputil.SendPostJson(sendurl, param, nil)
+	if err != nil {
+		logs.Error(err)
+	}
+	resMap := make(map[string]interface{})
+	json.Unmarshal([]byte(res), &resMap)
+	fmt.Sprintln(resMap)
+	return res
 }

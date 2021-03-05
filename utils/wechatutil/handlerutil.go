@@ -2,6 +2,8 @@ package wechatutil
 
 import (
 	"encoding/xml"
+	"fmt"
+	times "time"
 	"tsyc/models/wechatbeans"
 	"tsyc/service/wechatService"
 
@@ -49,12 +51,34 @@ func EventHand(msg string) {
 	event := message.Event
 	switch event {
 	case "subscribe":
-		// TODO 用户订阅
-		logs.Info(message.FromUserName + "关注")
-		openid := message.FromUserName
-		users := wechatService.GetUserInfo(openid)
-		logs.Info(users)
-		wechatService.SendTextMessage(openid, "感谢您的关注")
+		// 用户订阅
+		fmt.Print(message.EventKey + "^^^^")
+		if message.EventKey != "" {
+			// TODO 扫码关注事件
+
+			logs.Info(message.FromUserName + "扫码关注")
+		} else {
+			logs.Info(message.FromUserName + "关注")
+			openid := message.FromUserName
+			users := wechatService.GetUserInfo(openid)
+			logs.Info(users)
+			wechatService.SendTextMessage(openid, "感谢您的关注")
+			data := make(map[string]interface{})
+			head := make(map[string]string)
+			head["value"] = "欢迎关注"
+			head["color"] = "#173177"
+			name := make(map[string]string)
+			name["value"] = users.Nickname
+			name["color"] = "#D4D4D4"
+			time := make(map[string]string)
+			time["value"] = times.Now().String()
+			time["color"] = "#444444"
+			data["head"] = head
+			data["name"] = name
+			data["time"] = time
+			wechatService.Sendtemplate(openid, data, "yGqOStOFK1qOci1U0-6hdhwrBL1iz_hM2kaoqrY2ZAY", "", "", "")
+		}
+
 		break
 	case "unsubscribe":
 		// TODO 取消订阅
@@ -62,7 +86,7 @@ func EventHand(msg string) {
 		break
 	case "SCAN":
 		// TODO 用户已关注时扫描带参数二维码事件
-		logs.Info(message.FromUserName + "扫码关注")
+		logs.Info(message.FromUserName + "已经关注")
 		break
 	case "LOCATION":
 		// TODO 上报地理位置事件
